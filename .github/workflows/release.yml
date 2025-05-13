@@ -32,7 +32,7 @@ jobs:
         with:
           name: app-deb
           # Path is relative to GITHUB_WORKSPACE (/home/runner/work/Telekomanda/)
-          path: composeApp/build/compose/binaries/main/deb/Telekomanda-1.0.0_amd64.deb # VERIFY FILENAME
+          path: composeApp/build/compose/binaries/main/deb/telekomanda_1.0.0_amd64.deb
 
   build-windows:
     name: Build Windows (MSI)
