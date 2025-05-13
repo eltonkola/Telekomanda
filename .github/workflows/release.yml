@@ -2,10 +2,6 @@ name: Build and Release Telekomanda
 
 on:
   workflow_dispatch: # Allows manual triggering
-  # push: # Example: Uncomment and configure if you want to trigger on pushes
-  #   branches: [ main ]
-  # release: # Example: Uncomment if you want to trigger when a GitHub Release is published/created
-  #   types: [ published ]
 
 jobs:
   build-linux:
@@ -13,31 +9,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Use latest stable version
+        uses: actions/checkout@v4 # Checks out to /home/runner/work/Telekomanda/
 
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v1 # Validates gradlew at repo root
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v4 # Use latest stable version
+        uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: 'temurin'
-          cache: gradle # Cache Gradle dependencies
+          cache: gradle
 
       - name: Make gradlew executable
-        run: chmod +x ./gradlew # Or path/to/your/gradlew if in subdirectory
-        working-directory: Telekomanda # If your gradlew is in eltonkola
+        run: chmod +x ./gradlew # ./gradlew is at the repo root
 
       - name: Build Deb package
-        run: ./gradlew :composeApp:packageDeb # Assuming composeApp is your module
-        working-directory: Telekomanda # If your gradlew is in eltonkola
+        run: ./gradlew :composeApp:packageDeb # ./gradlew is at the repo root
 
       - name: Upload DEB Artifact
-        uses: actions/upload-artifact@v4 # Use latest stable version
+        uses: actions/upload-artifact@v4
         with:
-          name: app-deb # Artifact name for download later
-          path: Telekomanda/composeApp/build/compose/binaries/main/deb/Telekomanda-1.0.0_amd64.deb # Verify this exact filename
+          name: app-deb
+          # Path is relative to GITHUB_WORKSPACE (/home/runner/work/Telekomanda/)
+          path: composeApp/build/compose/binaries/main/deb/Telekomanda-1.0.0_amd64.deb # VERIFY FILENAME
 
   build-windows:
     name: Build Windows (MSI)
@@ -56,22 +51,20 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # No chmod needed for gradlew.bat on Windows
-
       - name: Build Msi package
-        run: ./gradlew.bat :composeApp:packageMsi
-        working-directory: Telekomanda # If your gradlew is in eltonkola
-        shell: cmd # Or powershell, ensure gradlew.bat is used correctly
+        run: ./gradlew.bat :composeApp:packageMsi # ./gradlew.bat is at the repo root
+        shell: cmd
 
       - name: Upload MSI Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-msi
-          path: Telekomanda\composeApp\build\compose\binaries\main\msi\Telekomanda-1.0.0.msi # Verify this exact filename
+          # Path is relative to GITHUB_WORKSPACE
+          path: composeApp\build\compose\binaries\main\msi\Telekomanda-1.0.0.msi # VERIFY FILENAME
 
   build-macos:
     name: Build macOS (DMG)
-    runs-on: macos-latest # Consider macos-13 or macos-12 if latest has issues
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -87,26 +80,22 @@ jobs:
           cache: gradle
 
       - name: Make gradlew executable
-        run: chmod +x ./gradlew
-        working-directory: Telekomanda # If your gradlew is in eltonkola
+        run: chmod +x ./gradlew # ./gradlew is at the repo root
 
       - name: Build Dmg package
-        run: ./gradlew :composeApp:packageDmg
-        working-directory: Telekomanda # If your gradlew is in eltonkola
+        run: ./gradlew :composeApp:packageDmg # ./gradlew is at the repo root
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-dmg
-          path: Telekomanda/composeApp/build/compose/binaries/main/dmg/Telekomanda-1.0.0.dmg # Verify this exact filename
+          # Path is relative to GITHUB_WORKSPACE
+          path: composeApp/build/compose/binaries/main/dmg/Telekomanda-1.0.0.dmg # VERIFY FILENAME
 
   publish-release:
     name: Publish GitHub Release
     runs-on: ubuntu-latest
     needs: [build-linux, build-windows, build-macos]
-    # Optional: Add permissions if your GITHUB_TOKEN needs more scope (usually not needed for create-release and upload-release-asset)
-    # permissions:
-    #   contents: write # To create releases and upload assets
     steps:
       - name: Download DEB Artifact
         uses: actions/download-artifact@v4
@@ -135,13 +124,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v1.0.0 # TODO: Make this dynamic (e.g., from input, or git tag)
+          tag_name: v1.0.0 # TODO: Make this dynamic
           release_name: Telekomanda v1.0.0 # TODO: Make this dynamic
           body: |
             Release of Telekomanda version 1.0.0.
             Includes builds for Linux (DEB), Windows (MSI), and macOS (DMG).
-          draft: false      # Set to true if you want to manually publish later
-          prerelease: false # Set to true if this is a pre-release
+          draft: false
+          prerelease: false
 
       - name: Upload Release Asset - DEB
         uses: actions/upload-release-asset@v1
@@ -149,7 +138,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release-assets/Telekomanda-1.0.0_amd64.deb  # VERIFY THIS FILENAME (was Telekomanda-1.0.0-1_amd64.deb before, ensure consistency)
+          asset_path: release-assets/Telekomanda-1.0.0_amd64.deb  # VERIFY FILENAME
           asset_name: Telekomanda-1.0.0-linux-amd64.deb
           asset_content_type: application/vnd.debian.binary-package
 
@@ -159,7 +148,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release-assets/Telekomanda-1.0.0.msi # VERIFY THIS FILENAME
+          asset_path: release-assets/Telekomanda-1.0.0.msi # VERIFY FILENAME
           asset_name: Telekomanda-1.0.0-windows-x64.msi
           asset_content_type: application/x-msi
 
@@ -169,6 +158,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release-assets/Telekomanda-1.0.0.dmg # VERIFY THIS FILENAME
+          asset_path: release-assets/Telekomanda-1.0.0.dmg # VERIFY FILENAME
           asset_name: Telekomanda-1.0.0-macos.dmg
           asset_content_type: application/x-apple-diskimage
