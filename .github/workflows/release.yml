@@ -1,0 +1,165 @@
+name: Build and Release Telekomanda
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build-linux:
+    name: Build Linux (DEB)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4 # Checks out to /home/runner/work/Telekomanda/
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1 # Validates gradlew at repo root
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew # ./gradlew is at the repo root
+
+      - name: Build Deb package
+        run: ./gradlew :composeApp:packageDeb # ./gradlew is at the repo root
+
+      - name: Upload DEB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-deb
+          # Path is relative to GITHUB_WORKSPACE (/home/runner/work/Telekomanda/)
+          path: composeApp/build/compose/binaries/main/deb/telekomanda_1.0.0_amd64.deb
+
+  build-windows:
+    name: Build Windows (MSI)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Build Msi package
+        run: ./gradlew.bat :composeApp:packageMsi # ./gradlew.bat is at the repo root
+        shell: cmd
+
+      - name: Upload MSI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-msi
+          # Path is relative to GITHUB_WORKSPACE
+          path: composeApp\build\compose\binaries\main\msi\Telekomanda-1.0.0.msi # VERIFY FILENAME
+
+  build-macos:
+    name: Build macOS (DMG)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew # ./gradlew is at the repo root
+
+      - name: Build Dmg package
+        run: ./gradlew :composeApp:packageDmg # ./gradlew is at the repo root
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-dmg
+          # Path is relative to GITHUB_WORKSPACE
+          path: composeApp/build/compose/binaries/main/dmg/Telekomanda-1.0.0.dmg # VERIFY FILENAME
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows, build-macos]
+    permissions:
+      contents: write 
+    steps:
+      - name: Download DEB Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-deb
+          path: release-assets/
+
+      - name: Download MSI Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-msi
+          path: release-assets/
+
+      - name: Download DMG Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-dmg
+          path: release-assets/
+
+      - name: List Downloaded Files
+        run: ls -R release-assets/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.0.0 # TODO: Make this dynamic
+          release_name: Telekomanda v1.0.0 # TODO: Make this dynamic
+          body: |
+            Release of Telekomanda version 1.0.0.
+            Includes builds for Linux (DEB), Windows (MSI), and macOS (DMG).
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset - DEB
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release-assets/telekomanda_1.0.0_amd64.deb  # VERIFY FILENAME
+          asset_name: telekomanda_1.0.0_amd64.deb
+          asset_content_type: application/vnd.debian.binary-package
+
+      - name: Upload Release Asset - MSI
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release-assets/Telekomanda-1.0.0.msi # VERIFY FILENAME
+          asset_name: Telekomanda-1.0.0.msi
+          asset_content_type: application/x-msi
+
+      - name: Upload Release Asset - DMG
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release-assets/Telekomanda-1.0.0.dmg # VERIFY FILENAME
+          asset_name: Telekomanda-1.0.0.dmg
+          asset_content_type: application/x-apple-diskimage
