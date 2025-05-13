@@ -1,0 +1,367 @@
+package com.eltonkola
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eltonkola.TVRemoteViewModel.devices
+import com.eltonkola.TVRemoteViewModel.isScanning
+import com.eltonkola.TVRemoteViewModel.lastError
+import com.eltonkola.TVRemoteViewModel.selectedDevice
+
+@Composable
+fun TVRemoteUi(viewModel: TVRemoteViewModel) {
+    val selectedDevice by viewModel.selectedDevice.collectAsStateWithLifecycle()
+    val isPowerOn = remember { mutableStateOf(true) }
+
+
+    Column(
+        modifier = Modifier
+            .width(300.dp)
+            .padding(vertical = 16.dp)
+            .shadow(8.dp, RoundedCornerShape(24.dp))
+            .background(Color(0xFF333333), RoundedCornerShape(24.dp))
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Remote Header with IR Sensor
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "SMART TV REMOTE",
+                    color = Color.LightGray,
+                    fontSize = 14.sp
+                )
+
+                Text(
+                    text = "${selectedDevice ?: "No device selected"}",
+                    fontSize = 9.sp,
+                    color = Color.LightGray,
+                )
+            }
+
+
+            // IR Sensor (visual indicator)
+
+            CircleButton(
+                size = 34.dp,
+                text = if (isPowerOn.value) "OFF" else "ON",
+                backgroundColor = if (isPowerOn.value) Color.Red else Color.Green,
+                onClick = {
+                    isPowerOn.value = !isPowerOn.value
+                    viewModel.sendKeyEvent("KEYCODE_POWER")
+                },
+                enabled = selectedDevice != null
+            )
+
+
+        }
+
+        // Navigation Section with Cross-shaped D-pad
+
+        val roundSize = 12.dp
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+                .background(Color(0xFF444444), RoundedCornerShape(16.dp))
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Cross-shaped D-pad with OK in the middle
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Up button
+                Row(
+                    modifier = Modifier.clip(
+                        RoundedCornerShape(
+                            topStart = roundSize,
+                            topEnd = roundSize,
+                            bottomEnd = 0.dp,
+                            bottomStart = 0.dp
+                        )
+                    ).background(Color.Gray).padding(4.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    DirectionButton(
+                        icon = Icons.Default.KeyboardArrowUp,
+                        backgroundColor = Color(0xFF666666),
+                        onClick = { viewModel.sendKeyEvent("KEYCODE_DPAD_UP") },
+                        enabled = selectedDevice != null
+                    )
+                }
+
+                // Left, OK, Right
+                Row(
+                    modifier = Modifier.clip(RoundedCornerShape(roundSize)).background(Color.Gray)
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    DirectionButton(
+                        icon = Icons.Default.KeyboardArrowLeft,
+                        backgroundColor = Color(0xFF666666),
+                        onClick = { viewModel.sendKeyEvent("KEYCODE_DPAD_LEFT") },
+                        enabled = selectedDevice != null
+                    )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+                    PressableIcon(
+                        icon = Icons.Default.Home,
+                        contentDescription = "Favorite Heart",
+                        onPress = {
+                            viewModel.sendKeyEvent("KEYCODE_DPAD_CENTER")
+                        },
+                        enabledButton = selectedDevice != null,
+                        onLongPress = {
+                            viewModel.sendKeyEvent("--longpress KEYCODE_DPAD_CENTER")
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    DirectionButton(
+                        icon = Icons.Default.KeyboardArrowRight,
+                        backgroundColor = Color(0xFF666666),
+                        onClick = { viewModel.sendKeyEvent("KEYCODE_DPAD_RIGHT") },
+                        enabled = selectedDevice != null
+                    )
+                }
+
+                // Down button
+                Row(
+                    modifier = Modifier.clip(
+                        RoundedCornerShape(
+                            topStart = 0.dp,
+                            topEnd = 0.dp,
+                            bottomEnd = roundSize,
+                            bottomStart = roundSize
+                        )
+                    ).background(Color.Gray).padding(4.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    DirectionButton(
+                        icon = Icons.Default.KeyboardArrowDown,
+                        backgroundColor = Color(0xFF666666),
+                        onClick = { viewModel.sendKeyEvent("KEYCODE_DPAD_DOWN") },
+                        enabled = selectedDevice != null
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Back and Home
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                CircleButton(
+                    icon = Icons.Default.ArrowBack,
+                    backgroundColor = Color(0xFFF44336),
+                    onClick = { viewModel.sendKeyEvent("KEYCODE_BACK") },
+                    enabled = selectedDevice != null
+                )
+
+                CircleButton(
+                    icon = Icons.Default.Home,
+                    backgroundColor = Color(0xFF4CAF50),
+                    onClick = { viewModel.sendKeyEvent("KEYCODE_HOME") },
+                    enabled = selectedDevice != null
+                )
+            }
+        }
+
+        // Menu and Settings
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            RoundedButton(
+                text = "MENU",
+                backgroundColor = Color(0xFF2196F3),
+                onClick = { viewModel.sendKeyEvent("KEYCODE_MENU") },
+                enabled = selectedDevice != null
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            RoundedButton(
+                text = "SETTINGS",
+                backgroundColor = Color(0xFF2196F3),
+                onClick = { viewModel.sendKeyEvent("KEYCODE_SETTINGS") },
+                enabled = selectedDevice != null
+            )
+
+        }
+
+
+
+    }
+
+
+}
+
+@Composable
+fun MoreControls(
+    viewModel: TVRemoteViewModel
+){
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        // Volume and Channel
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // Volume Column
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "VOLUME",
+                    color = Color.LightGray,
+                    fontSize = 12.sp
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                CircleButton(
+                    text = "+",
+                    backgroundColor = Color(0xFF555555),
+                    onClick = { viewModel.sendKeyEvent("KEYCODE_VOLUME_UP") },
+                    enabled = selectedDevice != null
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                CircleButton(
+                    text = "-",
+                    backgroundColor = Color(0xFF555555),
+                    onClick = { viewModel.sendKeyEvent("KEYCODE_VOLUME_DOWN") },
+                    enabled = selectedDevice != null
+                )
+            }
+
+            // Channel Column
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "CHANNEL",
+                    color = Color.LightGray,
+                    fontSize = 12.sp
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                CircleButton(
+                    text = "+",
+                    backgroundColor = Color(0xFF555555),
+                    onClick = { viewModel.sendKeyEvent("KEYCODE_CHANNEL_UP") },
+                    enabled = selectedDevice != null
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                CircleButton(
+                    text = "-",
+                    backgroundColor = Color(0xFF555555),
+                    onClick = { viewModel.sendKeyEvent("KEYCODE_CHANNEL_DOWN") },
+                    enabled = selectedDevice != null
+                )
+            }
+        }
+
+
+        // App Shortcuts
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            RoundedButton(
+                text = "NETFLIX",
+                backgroundColor = Color(0xFFE50914),
+                onClick = { viewModel.sendKeyEvent("KEYCODE_MEDIA_PLAY") }, // Replace with app-specific code
+                enabled = selectedDevice != null
+            )
+
+            RoundedButton(
+                text = "YOUTUBE",
+                backgroundColor = Color(0xFFFF0000),
+                onClick = { viewModel.sendKeyEvent("KEYCODE_MEDIA_PLAY") }, // Replace with app-specific code
+                enabled = selectedDevice != null
+            )
+        }
+
+        // Numpad
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            for (row in listOf(
+                listOf("1", "2", "3"),
+                listOf("4", "5", "6"),
+                listOf("7", "8", "9"),
+                listOf("*", "0", "#")
+            )) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    for (num in row) {
+                        CircleButton(
+                            text = num,
+                            backgroundColor = Color(0xFF777777),
+                            onClick = {
+                                val keycode = when (num) {
+                                    "0" -> "KEYCODE_0"
+                                    "1" -> "KEYCODE_1"
+                                    "2" -> "KEYCODE_2"
+                                    "3" -> "KEYCODE_3"
+                                    "4" -> "KEYCODE_4"
+                                    "5" -> "KEYCODE_5"
+                                    "6" -> "KEYCODE_6"
+                                    "7" -> "KEYCODE_7"
+                                    "8" -> "KEYCODE_8"
+                                    "9" -> "KEYCODE_9"
+                                    "*" -> "KEYCODE_STAR"
+                                    "#" -> "KEYCODE_POUND"
+                                    else -> ""
+                                }
+                                viewModel.sendKeyEvent(keycode)
+                            },
+                            enabled = selectedDevice != null
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+    }
+}
