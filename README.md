@@ -1,7 +1,7 @@
 # Telekomanda
 
 <p align="center">
-  <img src="https://github.com/eltonkola/Telekomanda/raw/main/fires/ikona.png" width="200" alt="Telekomanda App Icon">
+  <img src="https://github.com/eltonkola/Telekomanda/raw/main/fires/icon.png" width="200" alt="Telekomanda App Icon">
 </p>
 
 Telekomanda is a desktop application that provides a user interface to control Android devices (including Android TV and phones emulating TV behavior) using ADB (Android Debug Bridge) commands. It's particularly useful for developers testing Android TV applications on physical devices or emulators connected via ADB Wi-Fi, offering a convenient on-screen remote.
@@ -13,8 +13,6 @@ This is a Kotlin Multiplatform project targeting Desktop.
 | Main Remote                                                                                             | Device Scan                                                                                             | More Controls                                                                                             |
 | :----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------: |
 | <img src="https://github.com/eltonkola/Telekomanda/raw/main/fires/screenshot_1.png" width="200" alt="Main Remote UI"> | <img src="https://github.com/eltonkola/Telekomanda/raw/main/fires/screenshot_2.png" width="200" alt="Device Scan UI"> | <img src="https://github.com/eltonkola/Telekomanda/raw/main/fires/screenshot_3.png" width="200" alt="More Controls UI"> |
-*(Add alt text to your images for accessibility)*
-
 ## Features
 
 *   Scan and discover ADB-enabled devices on your network.
