@@ -27,17 +27,17 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew # Or path/to/your/gradlew if in subdirectory
-        working-directory: eltonkola # If your gradlew is in eltonkola
+        working-directory: Telekomanda # If your gradlew is in eltonkola
 
       - name: Build Deb package
         run: ./gradlew :composeApp:packageDeb # Assuming composeApp is your module
-        working-directory: eltonkola # If your gradlew is in eltonkola
+        working-directory: Telekomanda # If your gradlew is in eltonkola
 
       - name: Upload DEB Artifact
         uses: actions/upload-artifact@v4 # Use latest stable version
         with:
           name: app-deb # Artifact name for download later
-          path: eltonkola/composeApp/build/compose/binaries/main/deb/Telekomanda-1.0.0_amd64.deb # Verify this exact filename
+          path: Telekomanda/composeApp/build/compose/binaries/main/deb/Telekomanda-1.0.0_amd64.deb # Verify this exact filename
 
   build-windows:
     name: Build Windows (MSI)
@@ -60,14 +60,14 @@ jobs:
 
       - name: Build Msi package
         run: ./gradlew.bat :composeApp:packageMsi
-        working-directory: eltonkola # If your gradlew is in eltonkola
+        working-directory: Telekomanda # If your gradlew is in eltonkola
         shell: cmd # Or powershell, ensure gradlew.bat is used correctly
 
       - name: Upload MSI Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-msi
-          path: eltonkola\composeApp\build\compose\binaries\main\msi\Telekomanda-1.0.0.msi # Verify this exact filename
+          path: Telekomanda\composeApp\build\compose\binaries\main\msi\Telekomanda-1.0.0.msi # Verify this exact filename
 
   build-macos:
     name: Build macOS (DMG)
@@ -88,17 +88,17 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
-        working-directory: eltonkola # If your gradlew is in eltonkola
+        working-directory: Telekomanda # If your gradlew is in eltonkola
 
       - name: Build Dmg package
         run: ./gradlew :composeApp:packageDmg
-        working-directory: eltonkola # If your gradlew is in eltonkola
+        working-directory: Telekomanda # If your gradlew is in eltonkola
 
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-dmg
-          path: eltonkola/composeApp/build/compose/binaries/main/dmg/Telekomanda-1.0.0.dmg # Verify this exact filename
+          path: Telekomanda/composeApp/build/compose/binaries/main/dmg/Telekomanda-1.0.0.dmg # Verify this exact filename
 
   publish-release:
     name: Publish GitHub Release
